@@ -7,24 +7,31 @@ APP_NAME="MonitorSwitcher"
 VERSION="${1:-1.0.0}"
 BUILD_DIR="build"
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
-DMG_NAME="$APP_NAME-$VERSION.dmg"
-DMG_PATH="$BUILD_DIR/$DMG_NAME"
+STAGING_DIR="$BUILD_DIR/dmg-staging"
+DMG_PATH="$BUILD_DIR/$APP_NAME-$VERSION.dmg"
 
 ./build.sh
 
+echo ""
+echo "Staging DMG contents..."
+rm -rf "$STAGING_DIR"
+mkdir -p "$STAGING_DIR"
+cp -R "$APP_BUNDLE" "$STAGING_DIR/"
+ln -s /Applications "$STAGING_DIR/Applications"
+
 rm -f "$DMG_PATH"
 
-echo ""
 echo "Creating DMG..."
-create-dmg \
-    --volname "$APP_NAME $VERSION" \
-    --window-size 540 360 \
-    --icon-size 110 \
-    --icon "$APP_NAME.app" 140 170 \
-    --app-drop-link 400 170 \
-    --no-internet-enable \
+hdiutil create \
+    -volname "$APP_NAME $VERSION" \
+    -srcfolder "$STAGING_DIR" \
+    -ov \
+    -format UDZO \
     "$DMG_PATH" \
-    "$APP_BUNDLE"
+    >/dev/null
+
+rm -rf "$STAGING_DIR"
 
 echo ""
 echo "✓ DMG ready: $DMG_PATH"
+ls -lh "$DMG_PATH"
